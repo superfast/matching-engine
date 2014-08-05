@@ -1,3 +1,5 @@
+from nose.tools import raises
+
 from .. import market
 from .. import order
 
@@ -313,3 +315,73 @@ class Test_Market_Submit():
         assert self.m.cancelled_orders.count(order1) == 1
         assert self.m.get_orders_by_user(abe) == [order1]
 
+    def test_invalid_sell_asset(self):
+        """Submit an order with invalid SELL asset"""
+        order1 = order.LimitOrder(user=abe,buy_assetname="ZORKMID",sell_amount=7,sell_assetname="FOO",limit=8)
+        self.m.submit_order(order1)
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.left_limitbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.filled_orders
+        assert order1 in self.m.cancelled_orders
+        assert self.m.get_orders_by_user(abe) == [order1]
+        assert order1.status == "Misrouted"
+
+    def test_invalid_buy_asset(self):
+        """Submit an order with invalid BUY asset"""
+        order1 = order.LimitOrder(user=abe,buy_assetname="FOO",sell_amount=7,sell_assetname="ZORKMID",limit=8)
+        self.m.submit_order(order1)
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.left_limitbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.filled_orders
+        assert order1 in self.m.cancelled_orders
+        assert self.m.get_orders_by_user(abe) == [order1]
+        assert order1.status == "Misrouted"
+
+    def test_invalid_both_asset(self):
+        """Submit an order with two invalid assets"""
+        order1 = order.LimitOrder(user=abe,buy_assetname="BAR",sell_amount=7,sell_assetname="FOO",limit=8)
+        self.m.submit_order(order1)
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.left_limitbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.filled_orders
+        assert order1 in self.m.cancelled_orders
+        assert self.m.get_orders_by_user(abe) == [order1]
+        assert order1.status == "Misrouted"
+
+    @raises(TypeError)
+    def test_submit_valid_assets_wrong_type(self):
+        "Submitting an object with valid assetnames, but a wrong type, should raise TypeError"
+        
+        class Fake(object):
+            buy_assetname = "LATINUM"
+            sell_assetname = "ZORKMID"
+        order1 = Fake()
+        self.m.submit_order(order1)
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.left_limitbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.filled_orders
+        assert order1 not in self.m.cancelled_orders
+
+    @raises(TypeError)
+    def test_submit_valid_reversed_assets_wrong_type(self):
+        "Submitting an object with valid reversed assetnames, but a wrong type, should raise TypeError"
+        
+        class Fake(object):
+            buy_assetname = "ZORKMID"
+            sell_assetname = "LATINUM"
+        order1 = Fake()
+        self.m.submit_order(order1)
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.left_limitbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.filled_orders
+        assert order1 not in self.m.cancelled_orders

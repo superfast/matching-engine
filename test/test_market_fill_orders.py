@@ -87,13 +87,11 @@ class Test_Market_Fill():
         """Market can be printed"""
         print self.m
 
-    def test_submit_market_buy(self):
+    def test_submit_single_market_buy(self):
         """Submit a market BUY order"""
-
         self.assert_invariants()
         order1 = order.MarketOrder(user=alice,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID")
         order1.num = 100
-
         self.m.submit_order(order1)
         assert order1 in self.m.left_marketbook
         assert self.m.left_marketbook.count(order1) == 1
@@ -102,5 +100,40 @@ class Test_Market_Fill():
         assert order1 not in self.m.right_limitbook
         assert order1 not in self.m.filled_orders
         assert order1 not in self.m.cancelled_orders
-        
+        self.assert_invariants()
+
+    def test_submit_two_limit_buys(self):
+        """Submit two crossing limit order"""
+        self.assert_invariants()
+        order1 = order.LimitOrder(user=alice,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID",limit=10)
+        order2 = order.LimitOrder(user=bort,buy_assetname="ZORKMID",buy_amount=80,sell_assetname="LATINUM",limit=.10)
+        order1.num = 100
+        order2.num = 101
+        self.m.submit_order(order1)
+        self.m.submit_order(order2)
+        assert order1 in self.m.left_limitbook
+        assert order2 in self.m.right_limitbook
+        assert self.m.left_limitbook.count(order1) == 1
+        assert self.m.right_limitbook.count(order2) == 1
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.filled_orders
+        assert order1 not in self.m.cancelled_orders
+        assert order2 not in self.m.left_marketbook
+        assert order2 not in self.m.left_limitbook
+        assert order2 not in self.m.right_marketbook
+        assert order2 not in self.m.filled_orders
+        assert order2 not in self.m.cancelled_orders
+        self.m.match()
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.left_limitbook
+        assert order1 not in self.m.cancelled_orders
+        assert order2 not in self.m.left_marketbook
+        assert order2 not in self.m.left_limitbook
+        assert order2 not in self.m.right_limitbook
+        assert order2 not in self.m.right_marketbook
+        assert order2 not in self.m.cancelled_orders
         self.assert_invariants()
