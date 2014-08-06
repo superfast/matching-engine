@@ -27,8 +27,8 @@ class Payment():
 
 class Test_Market_Fill():
     def setup(self):
-        payment = Payment()
-        self.m = market.Market(payment.exchange_payment, latinum, zorkmid)
+        self.payment = Payment()
+        self.m = market.Market(self.payment.exchange_payment, latinum, zorkmid)
 
         # Simulated filled orders
         invariant_filled1 = order.MarketOrder(user=farah,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID")
@@ -66,9 +66,6 @@ class Test_Market_Fill():
 
         for o in self.invariant_limit_left_orders + self.invariant_limit_right_orders:
             self.m.submit_order(o)
-
-    def teardown(self):
-        print self.m
 
     def assert_invariants(self):
         for o in self.invariant_limit_left_orders:
@@ -147,8 +144,9 @@ class Test_Market_Fill():
         assert partial.limit == .10
         assert partial.num == 101
         assert order1 in self.m.filled_orders
-#        assert order2 in self.m.filled_orders
         assert order1.buy_amount == 7
         assert order2.buy_amount == 10
-
+        
         self.assert_invariants()
+        print self.payment.args 
+        assert self.payment.args == (bort, "LATINUM", 7, alice, "ZORKMID", 70)   # Alice sends Bort 70 zorkmid, Bort sends 7 latinum back
