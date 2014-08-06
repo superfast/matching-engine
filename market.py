@@ -182,7 +182,7 @@ class Market(object):
                 bigger_order = left_order
                 bigger_order_orderbook = left_orderbook
 
-            insufficient_funds_list = self.exchange_payment(bigger_order.user,self.asset2.name,smaller_order.buy_amount,smaller_order.user,self.asset1.name,smaller_order.sell_amount)
+            insufficient_funds_list = self.exchange_payment(bigger_order.user,bigger_order.sell_assetname,smaller_order.buy_amount,smaller_order.user,smaller_order.sell_assetname,smaller_order.sell_amount)
             if insufficient_funds_list: self.insufficient_funds(left_order,right_order,left_orderbook,right_orderbook,insufficient_funds_list); return
 
             smaller_order_orderbook.remove(smaller_order)
