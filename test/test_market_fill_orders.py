@@ -28,24 +28,24 @@ class Payment():
 class Test_Market_Fill():
     def setup(self):
         payment = Payment()
-        self.m = market.Market(payment.exchange_payment(), latinum, zorkmid)
+        self.m = market.Market(payment.exchange_payment, latinum, zorkmid)
 
         # Simulated filled orders
-        invariant_filled1 = order.MarketOrder(user=alice,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID")
+        invariant_filled1 = order.MarketOrder(user=farah,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID")
         invariant_filled2 = order.LimitOrder(user=dora,buy_assetname="ZORKMID",buy_amount=3.5,sell_assetname="LATINUM",limit=1)
         invariant_filled3 = order.MarketOrder(user=erin,buy_assetname="ZORKMID",buy_amount=3.5,sell_assetname="LATINUM")
         self.m.filled_orders.extend([invariant_filled1,invariant_filled2,invariant_filled3])
         self.invariant_filled_orders = [invariant_filled1, invariant_filled2, invariant_filled3]
 
         # Cancelled orders
-        invariant_cancelled1 = order.LimitOrder(user=bort,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID",limit=9)
+        invariant_cancelled1 = order.LimitOrder(user=carol,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID",limit=9)
         invariant_cancelled1.num = 1
         invariant_cancelled2 = order.MarketOrder(user=dora,buy_assetname="ZORKMID",buy_amount=70,sell_assetname="LATINUM")
         invariant_cancelled2.num = 2
         invariant_cancelled3 = order.LimitOrder(user=farah,buy_assetname="LATINUM",buy_amount=700,sell_assetname="ZORKMID",limit=11.5)
         invariant_cancelled3.num = 3
         self.m.submit_order(invariant_cancelled1)
-        self.m.cancel_order(1,bort)
+        self.m.cancel_order(1,carol)
         self.m.submit_order(invariant_cancelled2)
         self.m.cancel_order(2,dora)
         self.m.submit_order(invariant_cancelled3)
@@ -66,6 +66,9 @@ class Test_Market_Fill():
 
         for o in self.invariant_limit_left_orders + self.invariant_limit_right_orders:
             self.m.submit_order(o)
+
+    def teardown(self):
+        print self.m
 
     def assert_invariants(self):
         for o in self.invariant_limit_left_orders:
@@ -105,7 +108,7 @@ class Test_Market_Fill():
     def test_submit_two_limit_buys(self):
         """Submit two crossing limit order"""
         self.assert_invariants()
-        order1 = order.LimitOrder(user=alice,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID",limit=10)
+        order1 = order.LimitOrder(user=alice,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID",limit=10.0)
         order2 = order.LimitOrder(user=bort,buy_assetname="ZORKMID",buy_amount=80,sell_assetname="LATINUM",limit=.10)
         order1.num = 100
         order2.num = 101
@@ -133,7 +136,19 @@ class Test_Market_Fill():
         assert order1 not in self.m.cancelled_orders
         assert order2 not in self.m.left_marketbook
         assert order2 not in self.m.left_limitbook
-        assert order2 not in self.m.right_limitbook
+        assert order2 in self.m.right_limitbook
         assert order2 not in self.m.right_marketbook
         assert order2 not in self.m.cancelled_orders
+        # Bort should get a partial order filled
+        filled = [o for o in self.m.filled_orders if o.user==bort]
+        assert len(filled) == 1
+        partial = filled[0]
+        assert partial.buy_amount == 70
+        assert partial.limit == .10
+        assert partial.num == 101
+        assert order1 in self.m.filled_orders
+#        assert order2 in self.m.filled_orders
+        assert order1.buy_amount == 7
+        assert order2.buy_amount == 10
+
         self.assert_invariants()
