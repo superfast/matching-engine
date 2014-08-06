@@ -16,7 +16,7 @@ class LeftLimitOrderbook(Orderbook):
     def add(self,order):
         if order not in self:
             self.append(order)
-            self.sort(key=lambda k: k.limit)
+            self.sort(key=lambda k: k.unitprice)
             order.submitted_time = int(datetime.datetime.now().strftime('%s%f'))
             order.status = "Open Submitted"
 
@@ -24,7 +24,7 @@ class RightLimitOrderbook(Orderbook):
     def add(self,order):
         if order not in self:
             self.append(order)
-            self.sort(key=lambda k: k.limit, reverse=True)
+            self.sort(key=lambda k: k.unitprice, reverse=True)
             order.submitted_time = int(datetime.datetime.now().strftime('%s%f'))
             order.status = "Open Submitted"
     
@@ -120,7 +120,6 @@ class Market(object):
             print order.buy_assetname, order.sell_assetname
             order.status = "Misrouted"
             self.cancelled_orders.append(order)
-        print self
  
     def cancel_order(self,order_num,user):
         for orderbook in [self.left_limitbook, self.right_limitbook, self.left_marketbook, self.right_marketbook]:
@@ -217,13 +216,17 @@ class Market(object):
             elif self.right_limitbook:
                 self.fill(self.left_marketbook,self.right_limitbook,self.right_limitbook[-1].unitprice)
         elif self.left_limitbook:
+            print "order in left limitbook"
             if self.right_marketbook:
+                print "order in right marketbook"
                 self.fill(self.left_limitbook,self.right_marketbook,self.left_limitbook[-1].unitprice)
             elif self.right_limitbook and (self.left_limitbook[-1].unitprice >= self.right_limitbook[-1].unitprice):
+                print "here we are"
                 if self.left_limitbook[-1].submitted_time <= self.right_limitbook[-1].submitted_time:
                     unitprice = self.left_limitbook[-1].unitprice
                 else:
                     unitprice = self.right_limitbook[-1].unitprice 
                 self.fill(self.left_limitbook,self.right_limitbook,unitprice)
+        print self
 
 
