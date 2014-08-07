@@ -216,12 +216,9 @@ class Market(object):
             elif self.right_limitbook:
                 self.fill(self.left_marketbook,self.right_limitbook,self.right_limitbook[-1].unitprice)
         elif self.left_limitbook:
-            print "order in left limitbook"
             if self.right_marketbook:
-                print "order in right marketbook"
                 self.fill(self.left_limitbook,self.right_marketbook,self.left_limitbook[-1].unitprice)
             elif self.right_limitbook and (self.left_limitbook[-1].unitprice >= self.right_limitbook[-1].unitprice):
-                print "here we are"
                 if self.left_limitbook[-1].submitted_time <= self.right_limitbook[-1].submitted_time:
                     unitprice = self.left_limitbook[-1].unitprice
                 else:
