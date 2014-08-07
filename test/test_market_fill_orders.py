@@ -102,8 +102,8 @@ class Test_Market_Fill():
         assert order1 not in self.m.cancelled_orders
         self.assert_invariants()
 
-    def test_submit_two_limit_buys(self):
-        """Submit two crossing limit order"""
+    def test_fill_two_limit_buys(self):
+        """Fill two crossing limit buy orders"""
         self.assert_invariants()
         order1 = order.LimitOrder(user=alice,buy_assetname="LATINUM",buy_amount=7,sell_assetname="ZORKMID",limit=10.0)
         order2 = order.LimitOrder(user=bort,buy_assetname="ZORKMID",buy_amount=80,sell_assetname="LATINUM",limit=.10)
@@ -146,7 +146,54 @@ class Test_Market_Fill():
         assert order1 in self.m.filled_orders
         assert order1.buy_amount == 7
         assert order2.buy_amount == 10
-        
         self.assert_invariants()
-        print self.payment.args 
-        assert self.payment.args == (bort, "LATINUM", 7, alice, "ZORKMID", 70)   # Alice sends Bort 70 zorkmid, Bort sends 7 latinum back
+        # Alice sends Bort 70 zorkmid, Bort sends 7 latinum back
+        assert self.payment.args == (bort,"LATINUM",7,alice,"ZORKMID",70) or self.payment.args==(alice,"ZORKMID",70,bort,"LATINUM",7)  
+
+    def test_fill_two_limit_sells(self):
+        """Fill two crossing limit sell orders"""
+        self.assert_invariants()
+        order1 = order.LimitOrder(user=alice,buy_assetname="LATINUM",sell_amount=7,sell_assetname="ZORKMID",limit=.1)
+        order2 = order.LimitOrder(user=bort,buy_assetname="ZORKMID",sell_amount=80,sell_assetname="LATINUM",limit=10)
+        order1.num = 100
+        order2.num = 101
+        self.m.submit_order(order1)
+        self.m.submit_order(order2)
+        assert order1 in self.m.left_limitbook
+        assert order2 in self.m.right_limitbook
+        assert self.m.left_limitbook.count(order1) == 1
+        assert self.m.right_limitbook.count(order2) == 1
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.filled_orders
+        assert order1 not in self.m.cancelled_orders
+        assert order2 not in self.m.left_marketbook
+        assert order2 not in self.m.left_limitbook
+        assert order2 not in self.m.right_marketbook
+        assert order2 not in self.m.filled_orders
+        assert order2 not in self.m.cancelled_orders
+        self.m.match()
+        assert order1 not in self.m.right_marketbook
+        assert order1 not in self.m.left_marketbook
+        assert order1 not in self.m.right_limitbook
+        assert order1 not in self.m.left_limitbook
+        assert order1 not in self.m.cancelled_orders
+        assert order2 not in self.m.left_marketbook
+        assert order2 not in self.m.left_limitbook
+        assert order2 in self.m.right_limitbook
+        assert order2 not in self.m.right_marketbook
+        assert order2 not in self.m.cancelled_orders
+        # Bort should get a partial order filled
+        filled = [o for o in self.m.filled_orders if o.user==bort]
+        assert len(filled) == 1
+        partial = filled[0]
+        assert partial.sell_amount == .7
+        assert partial.limit == 10
+        assert partial.num == 101
+        assert order1 in self.m.filled_orders
+        assert order1.sell_amount == 7
+        assert order2.sell_amount == 79.3 
+        self.assert_invariants()
+        # Alice sends Bort 70 zorkmid, Bort sends 7 latinum back
+        assert self.payment.args == (bort,"LATINUM",.7,alice,"ZORKMID",7) or self.payment.args==(alice,"ZORKMID",7,bort,"LATINUM",.7)  
