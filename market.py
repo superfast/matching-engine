@@ -224,6 +224,5 @@ class Market(object):
                 else:
                     unitprice = self.right_limitbook[-1].unitprice 
                 self.fill(self.left_limitbook,self.right_limitbook,unitprice)
-        print self
 
 
