@@ -97,7 +97,6 @@ class Market(object):
                     order.unitprice = order.limit
                 elif order.ordertype == "SELL":
                     order.unitprice = 1.0 / order.limit
-                    print "Setting unitprice to {}".format(order.unitprice)
                 self.submit_limit_left(order)
             elif isinstance(order,MarketOrder):
                 self.submit_market_left(order)
@@ -109,15 +108,12 @@ class Market(object):
                     order.unitprice = order.limit
                 elif order.ordertype == "BUY":
                     order.unitprice = 1.0 / order.limit
-                    print "Setting unitprice to {}".format(order.unitprice)
                 self.submit_limit_right(order)
             elif isinstance(order,MarketOrder):
                 self.submit_market_right(order)
             else:
                 raise TypeError("Unsupported Order Type: {}".format(type(order)))
         else:
-            print self.asset1, self.asset2
-            print order.buy_assetname, order.sell_assetname
             order.status = "Misrouted"
             self.cancelled_orders.append(order)
  
@@ -132,7 +128,6 @@ class Market(object):
                 return True
 
     def insufficient_funds(self,left_order,right_order,left_orderbook,right_orderbook,insufficient_funds_list):
-        print "Insufficient funds"
         if left_order.user in insufficient_funds_list:
             left_order.status = "Insufficient Funds"
             left_orderbook.remove(left_order)
@@ -143,12 +138,10 @@ class Market(object):
             self.cancelled_orders.append(right_order)
 
     def fill(self,left_orderbook,right_orderbook,unitprice):
-        print "About to fill() at unitprice {}".format(unitprice)
         left_order = left_orderbook[-1]
         right_order = right_orderbook[-1]
         if not left_order.buy_amount: 
             left_order.buy_amount = left_order.sell_amount / unitprice 
-            print left_order.buy_amount
         if not left_order.sell_amount: 
             left_order.sell_amount = left_order.buy_amount * unitprice 
             left_order.sell_amount
