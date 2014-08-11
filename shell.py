@@ -241,21 +241,34 @@ class marketplace_shell(cmd.Cmd):
             if len(args) == 1:
                 if args[0] == "list":
                     orders = self.marketplace.get_orders_by_user(self.user)
-                    for order in orders: print >> self.stdout, order
-
-    def do_cancel(self, order_num):
-        if self.auth():
-            try:
-                order_num = int(order_num)
-            except ValueError:
-                return
-
-            print >> self.stdout,  "Attempting to cancel order number {}".format(order_num)
-            if self.marketplace.cancel_order(order_num,self.user):
-                print >> self.stdout,  "Order {} cancelled".format(order_num)
+                    if orders:
+                        for order in orders: print >> self.stdout, order
+                    else:
+                        print >> self.stdout,  "No orders found for the current user"
+                else:
+                    self.help_order()
+            elif len(args) == 2 and args[0] == "cancel":
+                try:
+                    order_num = int(args[1])
+                except ValueError:
+                    self.help_order()
+                    return
+                print >> self.stdout,  "Attempting to cancel order number {}".format(order_num)
+                if self.marketplace.cancel_order(order_num,self.user):
+                    print >> self.stdout,  "Order {} cancelled".format(order_num)
+                else:
+                    print >> self.stdout,  "Failed"
             else:
-                print >> self.stdout,  "Failed"
-     
+                self.help_order()
+
+    def help_order(self,**args):
+        print >> self.stdout,  "Usage: order list"
+        print >> self.stdout,  "List the orders for the current user"
+        print >> self.stdout,  ""
+        print >> self.stdout,  "Usage: order cancel <N>"
+        print >> self.stdout,  "Cancel the order numbered N"
+        print >> self.stdout,  ""
+    
     def do_balance(self,args):
         if self.auth():
             for balance in self.user.balance: print >> self.stdout, "{0.asset} {0.balance}".format(balance)

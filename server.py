@@ -18,7 +18,7 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
         cli = shell.marketplace_shell(None,self.rfile,self.wfile,marketplace_instance) 
         cli.use_rawinput = False
         cli.prompt = "> "
-        cli.intro = "Welcome to the Market!\n Use 'buy' and 'sell' commands to place orders."
+        cli.intro = "Welcome to the Market!\nUse 'buy' and 'sell' commands to place orders."
         cli.cmdloop()
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
