@@ -21,9 +21,10 @@ class marketplace_shell(cmd.Cmd):
             else:
                 print >> self.stdout,  "Currently logged in as {}".format(self.user.id)
             
-        elif len(tokens) == 2:
+        elif len(tokens) == 1:
             user_id = tokens[0]
-            password = tokens[1]
+            print >> self.stdout,  "Password:"
+            password = self.stdin.readline().rstrip('\r\n')
             self.user = self.marketplace.get_user_by_userid(user_id,password)  
             if self.user:  
                 print >> self.stdout,  "Successfully logged in as {}".format(self.user.id)
